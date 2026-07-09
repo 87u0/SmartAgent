@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartAgent - AI 对话</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">🤖 SmartAgent</div>
+        <div class="nav-links">
+            <a href="/">首页</a>
+            <a href="/chat" class="active">对话</a>
+            <a href="/knowledge">知识库</a>
+        </div>
+    </nav>
+
+    <div class="chat-layout">
+        <!-- Sidebar -->
+        <div class="chat-sidebar">
+            <div class="sidebar-section">
+                <h4>Agent 配置</h4>
+                <label class="toggle-row">
+                    <input type="checkbox" id="enableTools" checked>
+                    <span>启用工具调用</span>
+                </label>
+                <label class="toggle-row">
+                    <input type="checkbox" id="enableRag">
+                    <span>启用 RAG 检索</span>
+                </label>
+            </div>
+            <div class="sidebar-section">
+                <h4>可用工具</h4>
+                <div id="toolList" class="tool-list">
+                    <div class="tool-item">加载中...</div>
+                </div>
+            </div>
+            <div class="sidebar-section">
+                <button class="btn btn-secondary btn-sm" onclick="clearChat()">清空对话</button>
+            </div>
+        </div>
+
+        <!-- Main chat area -->
+        <div class="chat-main">
+            <div class="chat-header">
+                <h3>AI Agent 对话</h3>
+                <span class="status-badge" id="statusBadge">就绪</span>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message system-msg">
+                    <div class="msg-content">
+                        👋 你好！我是 SmartAgent，一个具有工具调用能力的 AI 助手。
+                        我可以帮你计算、搜索信息、执行代码等。
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <textarea id="userInput" rows="2" placeholder="输入你的问题..."
+                          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+                <button class="btn btn-primary" onclick="sendMessage()">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/chat.js"></script>
+</body>
+</html>

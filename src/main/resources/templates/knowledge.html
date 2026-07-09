@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartAgent - 知识库管理</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">🤖 SmartAgent</div>
+        <div class="nav-links">
+            <a href="/">首页</a>
+            <a href="/chat">对话</a>
+            <a href="/knowledge" class="active">知识库</a>
+        </div>
+    </nav>
+
+    <div class="knowledge-layout">
+        <div class="knowledge-header">
+            <h2>📚 RAG 知识库管理</h2>
+            <p>上传文档并自动构建向量索引，在聊天时启用 RAG 即可检索相关内容。</p>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea"
+                 ondragover="event.preventDefault()"
+                 ondrop="handleDrop(event)">
+                <div class="upload-icon">📄</div>
+                <p>拖拽文件到此处或点击上传</p>
+                <p class="upload-hint">支持 TXT、MD、PDF 格式</p>
+                <input type="file" id="fileInput" accept=".txt,.md,.pdf"
+                       style="display:none" onchange="uploadFile(this.files[0])">
+                <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">
+                    选择文件
+                </button>
+            </div>
+            <div id="uploadStatus" class="upload-status"></div>
+        </div>
+
+        <div class="documents-section">
+            <div class="section-header">
+                <h3>已索引文档</h3>
+                <button class="btn btn-danger btn-sm" onclick="clearDocuments()">清空全部</button>
+            </div>
+            <div id="docList" class="doc-list">
+                <div class="loading">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/chat.js"></script>
+    <script>
+        function handleDrop(e) {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file) uploadFile(file);
+        }
+
+        function uploadFile(file) {
+            if (!file) return;
+            const status = document.getElementById('uploadStatus');
+            status.innerHTML = '<div class="loading">正在上传处理...</div>';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/api/knowledge/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    status.innerHTML = `<div class="success-msg">✅ ${data.filename} 处理完成 (${data.chunks} 个片段)</div>`;
+                    loadDocuments();
+                } else {
+                    status.innerHTML = `<div class="error-msg">❌ ${data.message}</div>`;
+                }
+            })
+            .catch(e => {
+                status.innerHTML = `<div class="error-msg">❌ 上传失败: ${e.message}</div>`;
+            });
+        }
+
+        function loadDocuments() {
+            fetch('/api/knowledge/list')
+                .then(r => r.json())
+                .then(docs => {
+                    const list = document.getElementById('docList');
+                    if (docs.length === 0) {
+                        list.innerHTML = '<div class="empty-state">暂无文档，上传后自动索引</div>';
+                        return;
+                    }
+                    list.innerHTML = docs.map(d =>
+                        `<div class="doc-item">
+                            <span class="doc-id">📄 ${d.id}</span>
+                            <span class="doc-preview">${d.content.substring(0, 100)}...</span>
+                        </div>`
+                    ).join('');
+                });
+        }
+
+        function clearDocuments() {
+            if (!confirm('确定清空所有文档？')) return;
+            fetch('/api/knowledge/clear', { method: 'DELETE' })
+                .then(r => r.json())
+                .then(() => loadDocuments());
+        }
+
+        // Load on page load
+        document.addEventListener('DOMContentLoaded', loadDocuments);
+    </script>
+</body>
+</html>
